@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+	<title>用户登录</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+	<link rel="stylesheet" href="../static/css/login_register_style.css">
+	<link rel="stylesheet" href="../static/css/app-extras.css">
+	<link rel="stylesheet" href="../static/css/app-tech.css">
+	<link rel="stylesheet" href="../static/css/app-dark-theme.css">
+	<script src="../static/js/core/jquery-3.7.1.min.js"></script>
+
+	<style>
+		.login-mode-switch {
+			display: flex;
+			border-radius: 6px;
+			overflow: hidden;
+			border: 1px solid rgba(148, 163, 184, 0.25);
+			margin-bottom: 1rem;
+		}
+		.login-mode-switch label {
+			flex: 1;
+			margin: 0;
+			text-align: center;
+			padding: 10px 12px;
+			cursor: pointer;
+			background: #1a2234;
+			color: #94a3b8;
+			font-size: 14px;
+			border-right: 1px solid rgba(148, 163, 184, 0.25);
+		}
+		.login-mode-switch label:last-child {
+			border-right: none;
+		}
+		.login-mode-switch input {
+			position: absolute;
+			opacity: 0;
+			pointer-events: none;
+		}
+		.login-mode-switch label span {
+			display: block;
+		}
+		.login-mode-switch input:focus-visible + span {
+			outline: 2px solid #c4c4c4;
+			outline-offset: 2px;
+		}
+		.login-mode-switch label:has(input:checked) {
+			background: #111827;
+			color: #f1f5f9;
+			font-weight: 600;
+			box-shadow: inset 0 -2px 0 0 #007bff;
+		}
+		.login-hint {
+			font-size: 13px;
+			color: #888;
+			margin-top: -0.5rem;
+			margin-bottom: 1rem;
+			line-height: 1.4;
+		}
+	</style>
+
+	<script type="text/javascript">
+		$(function () {
+			for (var i = 1; i <= 7; i++) {
+				$('#li_' + i).attr('class', i === 1 ? 'nav-item active' : 'nav-item');
+			}
+
+			$.get('/user/check_login', {},
+				function (data) {
+					if (data['login'] === true) {
+						window.location.href = '/'
+					}
+				}
+			);
+
+			function syncLoginModeUI() {
+				var admin = $('#mode_admin').is(':checked');
+				$('#login_title').text(admin ? '管理员登录' : '用户登录');
+				$('#login_hint').text(admin
+					? '仅限系统中已设为管理员的账号；普通用户请选「用户登录」。'
+					: '请输入已注册的用户名与密码（管理员也可从此入口登录并保留管理权限）。');
+				$('#submit').text(admin ? '管理员登录' : '登录');
+			}
+
+			$('input[name="login_mode"]').on('change', syncLoginModeUI);
+			syncLoginModeUI();
+
+			$("#submit").click(function () {
+				const name = $("#name").val();
+				const password = $("#password").val();
+				const admin = $('#mode_admin').is(':checked');
+				const encName = encodeURIComponent(name);
+				const encPwd = encodeURIComponent(password);
+				const url = admin
+					? ('/user/admin_login/' + encName + '/' + encPwd)
+					: ('/user/login/' + encName + '/' + encPwd);
+
+				$.get(url, {},
+					function (data) {
+						alert(data['info']);
+						if (data['success']) {
+							window.location.href = '/'
+						}
+					}
+				);
+			});
+
+		});
+	</script>
+</head>
+
+<body class="sa-auth-body sa-dark-theme">
+	<section class="ftco-section">
+		<div class="container">
+			<div class="row justify-content-center">
+				<div class="col-md-8 text-center mb-5">
+					<h2 class="heading-section">欢迎使用知行合一量化交易系统</h2>
+				</div>
+			</div>
+			<div class="row justify-content-center">
+				<div class="col-md-12 col-lg-10">
+					<div class="wrap d-md-flex">
+						<div class="img" style="background-image: url(../static/img/login.png);">
+						</div>
+						<div class="login-wrap p-4 p-md-5">
+							<div class="d-flex">
+								<div class="w-100">
+									<h3 class="mb-2" id="login_title">用户登录</h3>
+								</div>
+								<div class="w-100">
+									<p class="social-media d-flex justify-content-end">
+										<a href="#"
+											class="social-icon d-flex align-items-center justify-content-center"><span
+												class="fa fa-facebook"></span></a>
+										<a href="#"
+											class="social-icon d-flex align-items-center justify-content-center"><span
+												class="fa fa-twitter"></span></a>
+									</p>
+								</div>
+							</div>
+							<p class="login-hint" id="login_hint"></p>
+
+							<div class="login-mode-switch">
+								<label><input type="radio" name="login_mode" id="mode_user" value="user" checked><span>用户登录</span></label>
+								<label><input type="radio" name="login_mode" id="mode_admin" value="admin"><span>管理员登录</span></label>
+							</div>
+
+							<form action="#" class="signin-form" onsubmit="return false;">
+								<div class="form-group mb-3">
+									<label class="label" for="name">用户名</label>
+									<input type="text" class="form-control" placeholder="Username" required id="name">
+								</div>
+								<div class="form-group mb-3">
+									<label class="label" for="password">密&nbsp;&nbsp;码</label>
+									<input type="password" class="form-control" placeholder="Password" required
+										id="password">
+								</div>
+								<div class="form-group">
+									<button type="button" id="submit"
+										class="form-control btn btn-primary rounded submit px-3">登录</button>
+								</div>
+
+							</form>
+							<p class="text-center">还没有账号? <a data-toggle="tab" href="/register">注册一个</a></p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+</body>
+
+</html>

@@ -1,0 +1,786 @@
+/* 与 Kaiadmin / Bootstrap 叠加：推荐、收藏等页面视觉增强 */
+
+/* bootstrap-datepicker：弹出层须高于固定顶栏（kaiadmin .main-header z-index: 1001） */
+.datepicker-dropdown {
+  z-index: 2000 !important;
+}
+
+.sa-hero {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 42%, #0f172a 100%);
+  color: #f8fafc;
+  border-radius: 14px;
+  padding: 1.75rem 2rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.sa-hero::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  right: -10%;
+  width: 45%;
+  height: 140%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.22) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.sa-hero h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+  color: #fff;
+}
+
+.sa-hero .sa-hero-sub {
+  color: rgba(248, 250, 252, 0.82);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  max-width: 52rem;
+  margin: 0;
+}
+
+.sa-hero .sa-hero-icon {
+  font-size: 2rem;
+  opacity: 0.9;
+  vertical-align: middle;
+  margin-right: 0.5rem;
+  color: #fbbf24;
+}
+
+.sa-card-soft {
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+  background: #fff;
+}
+
+.sa-card-soft .card-header {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.06));
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #1e293b;
+  padding: 0.9rem 1.25rem;
+}
+
+.sa-card-soft .card-body {
+  padding: 1.35rem 1.5rem 1.5rem;
+}
+
+.sa-form-section-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 0.65rem;
+}
+
+.sa-check-tile {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  margin: 0 0.5rem 0.5rem 0;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  background: #f8fafc;
+}
+
+.sa-check-tile:hover {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.sa-check-tile .form-check-input {
+  margin-top: 0;
+}
+
+.sa-check-tile .form-check-label {
+  margin-left: 0.35rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sa-btn-primary-lg {
+  padding: 0.55rem 1.6rem;
+  font-weight: 600;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+
+.sa-btn-primary-lg:hover {
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+}
+
+.sa-table-wrap {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+  background: #fff;
+}
+
+.sa-data-table thead th {
+  background: #1e293b;
+  color: #e2e8f0;
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  border: none !important;
+  padding: 0.85rem 0.75rem;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.sa-data-table tbody td {
+  vertical-align: middle;
+  padding: 0.72rem 0.75rem;
+  font-size: 0.9rem;
+  border-color: #f1f5f9;
+}
+
+.sa-data-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.05) !important;
+}
+
+.sa-data-table a {
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.sa-data-table a:hover {
+  color: #1d4ed8;
+}
+
+.sa-chg-up {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.sa-chg-down {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.sa-chg-flat {
+  color: #64748b;
+}
+
+.sa-stars-wrap {
+  letter-spacing: 3px;
+  font-size: 1.12rem;
+}
+
+.sa-stars-wrap .sa-stars-gold {
+  color: #d97706;
+  font-weight: 700;
+}
+
+.sa-stars-wrap small {
+  color: #94a3b8 !important;
+  font-weight: 500;
+  margin-left: 0.25rem;
+}
+
+.sa-badge-hit {
+  font-size: 0.72rem;
+  padding: 0.28em 0.55em;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.sa-reason-cell {
+  max-width: 320px;
+  white-space: normal;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #475569;
+}
+
+.sa-disclaimer {
+  border-radius: 10px;
+  border-left: 4px solid #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  color: #92400e;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.sa-disclaimer.err {
+  border-left-color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+  color: #991b1b;
+}
+
+.sa-empty-hint {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.sa-empty-hint.sa-card-soft {
+  padding: 2.75rem 1.5rem;
+}
+
+.sa-empty-hint i {
+  font-size: 2.5rem;
+  opacity: 0.35;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.sa-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.sa-code-inline {
+  font-size: 0.8rem;
+  background: #f1f5f9;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  color: #475569;
+}
+
+/* ---------- 全站模块页：统一边距与紧凑标题区 ---------- */
+.sa-page-shell {
+  padding-bottom: 2rem;
+}
+
+.sa-hero.sa-hero--compact {
+  padding: 1.2rem 1.5rem 1.1rem;
+  margin-bottom: 1.25rem;
+}
+
+.sa-hero.sa-hero--compact h2 {
+  font-size: 1.28rem;
+  margin-bottom: 0.35rem;
+}
+
+.sa-hero.sa-hero--compact .sa-hero-sub {
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.sa-chart-host {
+  min-height: 360px;
+}
+
+.sa-chart-host--kline {
+  height: 960px;
+  min-height: 800px;
+}
+
+/* 模块内旧式 h3.page-header 统一观感 */
+.page-inner h3.page-header,
+.sa-section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+/* 顶部 Tab */
+.sa-nav-tabs {
+  border-bottom: 2px solid #e2e8f0;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.sa-nav-tabs .nav-item .nav-link,
+.sa-nav-tabs .nav-item span.nav-link {
+  border: 1px solid transparent;
+  border-radius: 10px 10px 0 0;
+  color: #64748b;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+}
+
+.sa-nav-tabs .nav-item.active .nav-link,
+.sa-nav-tabs .nav-item .nav-link:hover {
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.08);
+  border-color: #e2e8f0 #e2e8f0 transparent;
+}
+
+.sa-nav-tabs .nav-item.active .nav-link {
+  font-weight: 600;
+  color: #1e40af;
+}
+
+/* 未使用 sa-data-table 的列表 */
+.sa-module-table {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(15, 23, 42, 0.06);
+}
+
+.sa-module-table thead th {
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  padding: 0.75rem 0.6rem;
+  white-space: nowrap;
+}
+
+.sa-module-table tbody td {
+  vertical-align: middle;
+  font-size: 0.88rem;
+}
+
+.sa-module-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+/* ---------- 首页 ---------- */
+.sa-home-landing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 160px);
+  padding: 1.5rem 0 2.5rem;
+}
+
+.sa-home-landing-card {
+  display: flex;
+  width: 100%;
+  max-width: 920px;
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18),
+    0 0 0 1px rgba(148, 163, 184, 0.12);
+  background: #fff;
+}
+
+.sa-home-landing-img {
+  flex: 1 1 50%;
+  min-height: 320px;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+.sa-home-landing-body {
+  flex: 1 1 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2.5rem 2.25rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 55%, #f1f5f9 100%);
+}
+
+.sa-home-landing-kicker {
+  font-family: "Rajdhani", "Public Sans", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0;
+}
+
+.sa-home-landing-title {
+  font-family: "Orbitron", "Public Sans", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  color: #0f172a;
+}
+
+.sa-home-landing-line {
+  width: 56px;
+  height: 3px;
+  margin-top: 1.25rem;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #22d3ee, #3b82f6);
+}
+
+@media (min-width: 992px) {
+  .sa-home-landing-title {
+    font-size: 1.65rem;
+  }
+
+  .sa-home-landing-img {
+    min-height: 360px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .sa-home-landing-card {
+    flex-direction: column;
+  }
+
+  .sa-home-landing-img {
+    min-height: 220px;
+    flex: 0 0 auto;
+  }
+
+  .sa-home-landing-body {
+    padding: 2rem 1.5rem 2.25rem;
+    text-align: center;
+    align-items: center;
+  }
+
+  .sa-home-landing-line {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.sa-home-wrap {
+  max-width: 1140px;
+  margin: 0 auto;
+}
+
+.sa-home-hero-row {
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.sa-home-hero-row h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+@media (min-width: 992px) {
+  .sa-home-hero-row h1 {
+    font-size: 2rem;
+  }
+}
+
+.sa-home-lead {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: #475569;
+  font-weight: 400;
+}
+
+.sa-home-feature-card {
+  height: 100%;
+  margin-top: 0;
+  padding: 1.5rem 1.25rem;
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 14px;
+  border: 1px solid #f1f5f9;
+}
+
+.sa-home-feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 36px rgba(37, 99, 235, 0.12);
+}
+
+.sa-home-feature-card .title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.sa-home-feature-card .title a {
+  color: #1e40af;
+  text-decoration: none;
+}
+
+.sa-home-feature-card .description {
+  font-size: 0.88rem;
+  color: #64748b;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.sa-home-hero-img img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.12);
+}
+
+/* ---------- 登录 / 注册（独立页） ---------- */
+body.sa-auth-body {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #0f172a 0%, #1e3a5f 45%, #1e293b 100%);
+}
+
+body.sa-auth-body .ftco-section {
+  margin-top: 0 !important;
+  padding: 2.5rem 0 3rem;
+}
+
+body.sa-auth-body .heading-section {
+  color: #f8fafc !important;
+  font-weight: 700;
+  font-size: 1.35rem;
+  line-height: 1.45;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.25);
+}
+
+body.sa-auth-body .wrap {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+body.sa-auth-body .login-wrap {
+  background: #fff;
+}
+
+body.sa-auth-body .login-wrap h3 {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+body.sa-auth-body .social-media {
+  display: none !important;
+}
+
+body.sa-auth-body .login-mode-switch {
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+
+body.sa-auth-body .login-mode-switch label {
+  flex: 1;
+  text-align: center;
+  padding: 0.65rem 0.5rem;
+  margin: 0;
+  cursor: pointer;
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+body.sa-auth-body .login-mode-switch label:last-child {
+  border-right: none;
+}
+
+body.sa-auth-body .login-mode-switch input {
+  margin-right: 0.35rem;
+}
+
+body.sa-auth-body .form-control {
+  border-radius: 10px;
+  border-color: #e2e8f0;
+}
+
+body.sa-auth-body .btn-primary.submit,
+body.sa-auth-body #submit {
+  border-radius: 10px !important;
+  font-weight: 600;
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+
+body.sa-auth-body .login-wrap a {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+body.sa-auth-body .login-hint {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* 预测页表单控件 */
+.sa-predict-form .form-control,
+.sa-predict-form .form-select {
+  border-radius: 8px;
+  max-width: 120px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.sa-predict-form .btn-info {
+  border-radius: 10px;
+  font-weight: 600;
+  padding: 0.45rem 1.25rem;
+}
+
+/* 推荐页：大模型板块方向输出 */
+.sa-llm-out {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: #1e293b;
+  min-height: 4rem;
+}
+
+/* ---------- 个性化选股推荐页 ---------- */
+.sa-recommend-page .sa-rec-hero {
+  margin-bottom: 1.5rem;
+}
+
+.sa-recommend-page .sa-rec-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 12px;
+  font-size: 0.88rem;
+  color: #475569;
+}
+
+.sa-recommend-page .sa-rec-flow-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.sa-recommend-page .sa-rec-flow-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  color: #fff;
+}
+
+.sa-recommend-page .sa-rec-flow-arrow {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.sa-recommend-page .sa-rec-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sa-recommend-page .sa-rec-card-title .badge {
+  font-weight: 600;
+}
+
+.sa-recommend-page .sa-rec-llm-split {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.sa-recommend-page .sa-rec-llm-split > .row {
+  flex: 0 0 auto;
+}
+
+.sa-recommend-page .sa-rec-llm-col-out {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+.sa-recommend-page .sa-rec-action-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.sa-recommend-page .sa-rec-action-stack .btn {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.sa-recommend-page .sa-rec-hint {
+  min-height: 1.5rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.sa-recommend-page .sa-rec-out-panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 0.85rem 1rem;
+  min-height: 8rem;
+}
+
+.sa-recommend-page .sa-rec-out-panel .sa-llm-out {
+  min-height: 6rem;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #e2e8f0;
+}
+
+.sa-recommend-page .sa-rec-table-card .card-header {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #0f172a;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.sa-recommend-page .sa-rec-table-note {
+  font-size: 0.8rem;
+  color: #64748b;
+  padding: 0.5rem 1rem 0;
+}
+
+.sa-recommend-page .sa-card-soft .card-header i.text-primary {
+  opacity: 0.95;
+}
+
+.sa-recommend-page .alert ul li {
+  margin-bottom: 0.15rem;
+}
+
+/* 推荐页：卡片头提示，避免浅底+浅字与主题色混成一块 */
+.sa-recommend-page .sa-llm-card-hint {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.35rem 0.85rem;
+  font-weight: 600;
+  color: #0f172a !important;
+  background: #f8fafc !important;
+  border: 1px solid #94a3b8;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.sa-recommend-page .sa-rec-prefs-badge {
+  color: #0c4a6e !important;
+  background: #e0f2fe !important;
+  border: 1px solid #7dd3fc;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+}

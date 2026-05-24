@@ -1,0 +1,134 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<script type="text/javascript">
+    $(function () {
+        for (var i = 1; i <= 7; i++) {
+            $('#li_' + i).attr('class', i === 5 ? 'nav-item active' : 'nav-item');
+        }
+
+        $('#module_name').text($('.nav-item.active').text());
+
+        function toastMsg(msg, type) {
+            type = type || 'info';
+            try {
+                if (typeof $.notify === 'function') {
+                    $.notify({ message: msg }, {
+                        type: type,
+                        placement: { from: 'top', align: 'right' },
+                        delay: 2800,
+                        z_index: 9999
+                    });
+                } else {
+                    alert(msg);
+                }
+            } catch (e) {
+                alert(msg);
+            }
+        }
+
+        function loadFavorites() {
+            var $btn = $('#btn_refresh');
+            $btn.prop('disabled', true);
+            $('#fav_hint').html('<span class="spinner-border spinner-border-sm me-2"></span>加载中…');
+            $('#fav_tbody').empty();
+            $('#fav_empty').hide();
+            $('#fav_table_wrap').hide();
+
+            $.get('/user/favorites/list', {}, function (res) {
+                $btn.prop('disabled', false);
+                $('#fav_hint').text('').removeClass('text-danger');
+                if (!res.success) {
+                    $('#fav_hint').addClass('text-danger').text(res.info || '加载失败');
+                    $('#fav_table_wrap').show();
+                    return;
+                }
+                var items = res.items || [];
+                if (items.length === 0) {
+                    $('#fav_empty').show();
+                    $('#fav_table_wrap').hide();
+                    return;
+                }
+                $('#fav_table_wrap').show();
+                items.forEach(function (it) {
+                    var link = '/stock_info?search=' + encodeURIComponent(it.code);
+                    var tr = $('<tr/>');
+                    tr.append('<td><a href="' + link + '" target="_blank"><i class="fas fa-link me-1 opacity-50 small"></i>' + $('<div/>').text(it.code).html() + '</a></td>');
+                    tr.append('<td><a href="' + link + '" target="_blank" class="fw-semibold">' + $('<div/>').text(it.name).html() + '</a></td>');
+                    tr.append('<td><span class="text-secondary">' + $('<div/>').text(it.board).html() + '</span></td>');
+                    tr.append('<td class="text-nowrap text-muted small"><i class="fas fa-clock me-1"></i>' + $('<div/>').text(it.created_at).html() + '</td>');
+                    var td = $('<td/>');
+                    var btn = $('<button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3"><i class="fas fa-trash-alt me-1"></i>删除</button>');
+                    btn.data('code', it.code);
+                    btn.on('click', function () {
+                        var code = $(this).data('code');
+                        if (!confirm('确定从收藏夹移除「' + code + '」？')) return;
+                        $.ajax({
+                            url: '/user/favorites/delete',
+                            type: 'POST',
+                            contentType: 'application/json; charset=utf-8',
+                            dataType: 'json',
+                            data: JSON.stringify({ code: code }),
+                            success: function (r) {
+                                toastMsg(r.info || (r.success ? '已删除' : '失败'), r.success ? 'success' : 'danger');
+                                if (r.success) loadFavorites();
+                            },
+                            error: function () {
+                                toastMsg('请求失败', 'danger');
+                            }
+                        });
+                    });
+                    td.append(btn);
+                    tr.append(td);
+                    $('#fav_tbody').append(tr);
+                });
+            }).fail(function () {
+                $btn.prop('disabled', false);
+                $('#fav_hint').addClass('text-danger').text('加载失败，请稍后重试。');
+                $('#fav_table_wrap').show();
+            });
+        }
+
+        loadFavorites();
+        $('#btn_refresh').click(loadFavorites);
+    });
+</script>
+
+<div class="sa-page-shell sa-favorites-page pb-4">
+    <div class="sa-hero">
+        <h2><i class="fas fa-star sa-hero-icon"></i>我的收藏</h2>
+        <p class="sa-hero-sub mb-0">收藏与当前登录账号绑定，数据保存在本机 SQLite 文件 <span class="sa-code-inline">user_info.db</span> 的 <strong>favorite</strong> 表中。可随时删除或前往「大模型辅助选股」继续添加。</p>
+    </div>
+
+    <div class="sa-toolbar">
+        <button type="button" class="btn btn-primary sa-btn-primary-lg" id="btn_refresh">
+            <i class="fas fa-sync-alt me-2"></i>刷新列表
+        </button>
+        <span id="fav_hint" class="text-muted small"></span>
+    </div>
+
+    <div id="fav_empty" class="sa-empty-hint sa-card-soft mb-4" style="display:none;">
+        <i class="fas fa-folder-open"></i>
+        收藏夹为空<br>
+        <span class="small">在「大模型辅助选股」结果中点击 <strong>收藏</strong> 即可加入此处</span>
+    </div>
+
+    <div id="fav_table_wrap" class="sa-table-wrap" style="display:none;">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 sa-data-table">
+                <thead>
+                    <tr>
+                        <th>代码</th>
+                        <th>名称</th>
+                        <th>所属版块</th>
+                        <th>收藏时间</th>
+                        <th style="width:120px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="fav_tbody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

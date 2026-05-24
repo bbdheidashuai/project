@@ -1,0 +1,259 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<script type="text/javascript">
+    $(function () {
+        for (var i = 1; i <= 7; i++) {
+            $('#li_' + i).attr('class', i === 4 ? 'nav-item active' : 'nav-item');
+        }
+        $('#module_name').text('大模型辅助选股');
+
+        function toastMsg(msg, type) {
+            type = type || 'info';
+            try {
+                if (typeof $.notify === 'function') {
+                    $.notify({ message: msg }, {
+                        type: type,
+                        placement: { from: 'top', align: 'right' },
+                        delay: 3200,
+                        z_index: 9999
+                    });
+                } else {
+                    alert(msg);
+                }
+            } catch (e) {
+                alert(msg);
+            }
+        }
+
+        function chgClass(v) {
+            if (v === null || v === undefined || v === '') return 'sa-chg-flat';
+            var n = parseFloat(v);
+            if (isNaN(n) || n === 0) return 'sa-chg-flat';
+            return n > 0 ? 'sa-chg-up' : 'sa-chg-down';
+        }
+
+        function fmtPct(v) {
+            if (v === null || v === undefined || v === '') return '—';
+            var n = parseFloat(v);
+            if (isNaN(n)) return '—';
+            return n + '%';
+        }
+
+        function addToFavorites(code, name, board) {
+            $.ajax({
+                url: '/user/favorites/add',
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                data: JSON.stringify({ code: code, name: name, board: board || '' }),
+                success: function (res) {
+                    toastMsg(res.info || (res.success ? '完成' : '失败'), res.success ? 'success' : 'danger');
+                },
+                error: function (xhr) {
+                    if (xhr.status === 401) {
+                        toastMsg('请先登录', 'warning');
+                    } else {
+                        toastMsg('请求失败', 'danger');
+                    }
+                }
+            });
+        }
+
+        function renderStockRows(rows) {
+            $('#tbody').empty();
+            (rows || []).forEach(function (s) {
+                var link = '/stock_info?search=' + encodeURIComponent(s.code);
+                var tr = $('<tr/>');
+                tr.append('<td class="text-muted fw-bold">' + s.rank + '</td>');
+                tr.append('<td><a href="' + link + '" target="_blank"><i class="fas fa-chart-line me-1 opacity-50"></i>' + $('<div/>').text(s.code).html() + '</a></td>');
+                tr.append('<td><a href="' + link + '" target="_blank">' + $('<div/>').text(s.name).html() + '</a></td>');
+                tr.append('<td><span class="text-secondary">' + $('<div/>').text(s.board).html() + '</span></td>');
+
+                var tdStars = $('<td/>').addClass('sa-stars-wrap');
+                if (s.stars != null) {
+                    tdStars.attr('title', s.stars + ' 星（本次 10 条内的相对推荐程度）');
+                }
+                tdStars.append($('<span/>').addClass('sa-stars-gold').text(s.stars_display || ''));
+                tdStars.append(' ');
+                tdStars.append($('<small/>').text(s.stars != null ? (s.stars + '星') : ''));
+                tr.append(tdStars);
+
+                tr.append($('<td/>').addClass(chgClass(s.today_chg)).text(fmtPct(s.today_chg)));
+                tr.append($('<td/>').addClass(chgClass(s.d5_chg)).text(fmtPct(s.d5_chg)));
+                tr.append($('<td/>').addClass(chgClass(s.main_d5)).text(fmtPct(s.main_d5)));
+                tr.append('<td class="sa-reason-cell">' + $('<div/>').text(s.reason).html() + '</td>');
+
+                var tdFav = $('<td/>');
+                var btnFav = $('<button type="button" class="btn btn-sm btn-primary shadow-sm"><i class="fas fa-star me-1"></i>收藏</button>');
+                btnFav.on('click', function () {
+                    addToFavorites(s.code, s.name, s.board);
+                });
+                tdFav.append(btnFav);
+                tr.append(tdFav);
+                $('#tbody').append(tr);
+            });
+        }
+
+        $('#btn_llm_sector').click(function () {
+            var $btn = $('#btn_llm_sector');
+            var extra = $('#llm_extra').val().trim();
+            $('#llm_sector_hint').html('<span class="spinner-border spinner-border-sm me-2" role="status"></span>正在请求大模型…');
+            $('#llm_sector_err').text('').removeClass('text-danger');
+            $('#llm_sector_out').text('');
+            $('#llm_sector_disclaimer').text('').removeClass('sa-disclaimer err');
+            $btn.prop('disabled', true);
+            $.ajax({
+                url: '/api/llm_sector_direction',
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                data: JSON.stringify({ extra: extra }),
+                success: function (data) {
+                    $('#llm_sector_hint').text('');
+                    $btn.prop('disabled', false);
+                    if (!data.success) {
+                        $('#llm_sector_err').addClass('text-danger').text(data.message || '大模型生成失败');
+                        return;
+                    }
+                    $('#llm_sector_out').text(data.content || '');
+                    $('#llm_sector_disclaimer').addClass('sa-disclaimer').removeClass('err').text(data.disclaimer || '');
+                },
+                error: function () {
+                    $('#llm_sector_hint').text('');
+                    $btn.prop('disabled', false);
+                    $('#llm_sector_err').addClass('text-danger').text('请求失败，请检查网络或服务端配置。');
+                }
+            });
+        });
+
+        $('#btn_llm_pick_stocks').click(function () {
+            var $btn = $('#btn_llm_pick_stocks');
+            var extra = $('#llm_extra').val().trim();
+            $('#llm_pick_hint').html('<span class="spinner-border spinner-border-sm me-2" role="status"></span>大模型正在生成 10 只股票…');
+            $btn.prop('disabled', true);
+            $('#tbody').empty();
+            $('#disclaimer').removeClass('err').text('').removeClass('sa-disclaimer');
+            $.ajax({
+                url: '/api/llm_ten_stocks',
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                data: JSON.stringify({ extra: extra }),
+                success: function (data) {
+                    $('#llm_pick_hint').text('');
+                    $btn.prop('disabled', false);
+                    if (!data.success) {
+                        $('#disclaimer').addClass('sa-disclaimer err').text(data.message || '生成失败');
+                        return;
+                    }
+                    $('#disclaimer').addClass('sa-disclaimer').removeClass('err').text(data.disclaimer || '');
+                    renderStockRows(data.stocks || []);
+                },
+                error: function () {
+                    $('#llm_pick_hint').text('');
+                    $btn.prop('disabled', false);
+                    $('#disclaimer').addClass('sa-disclaimer err').text('请求失败，请检查网络或稍后重试。');
+                }
+            });
+        });
+    });
+</script>
+
+<div class="sa-page-shell sa-recommend-page pb-4">
+    <div class="sa-hero sa-hero--compact sa-rec-hero">
+        <h2><i class="fas fa-robot sa-hero-icon"></i>大模型辅助选股</h2>
+        <p class="sa-hero-sub mb-0">填写说明文字，由大模型生成板块/行业方向或推荐 10 只股票；结果展示在下方表格，可跳转行情或加入收藏。</p>
+        <div class="sa-rec-flow" role="navigation" aria-label="使用步骤">
+            <span class="sa-rec-flow-step"><span class="sa-rec-flow-num">1</span>填写说明文字</span>
+            <span class="sa-rec-flow-arrow">→</span>
+            <span class="sa-rec-flow-step"><span class="sa-rec-flow-num">2</span>选择生成方式</span>
+            <span class="sa-rec-flow-arrow">→</span>
+            <span class="sa-rec-flow-step"><span class="sa-rec-flow-num">3</span>查看结果</span>
+        </div>
+    </div>
+
+    <div class="card sa-card-soft border-primary border-opacity-25 sa-llm-card mb-4">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span><i class="fas fa-robot me-2 text-primary"></i>大模型辅助</span>
+            <span class="sa-llm-card-hint small rounded-pill">API 配置见 env.example</span>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-light border small mb-3 py-2">
+                <strong class="d-block mb-1 text-dark">两种能力</strong>
+                <ul class="mb-0 ps-3 lh-lg text-secondary">
+                    <li><strong>板块/行业</strong>：解读说明文字，结果见下方输出区</li>
+                    <li><strong>大模型 10 只</strong>：按说明生成标的并填入底部表格</li>
+                </ul>
+            </div>
+
+            <div class="sa-rec-llm-split">
+                <div class="row g-3 m-0">
+                    <div class="col-lg-6 sa-rec-llm-col-input">
+                        <div class="sa-rec-card-title">① 说明文字</div>
+                        <label for="llm_extra" class="form-label small text-secondary mb-1">写给大模型的上下文</label>
+                        <textarea class="form-control rounded-3" id="llm_extra" rows="8" placeholder="示例：看好高股息与央企改革，持仓偏中长期，希望分散在制造与公用事业…"></textarea>
+                    </div>
+                    <div class="col-lg-6 sa-rec-llm-col-actions">
+                        <div class="sa-rec-card-title">② 生成操作</div>
+                        <div class="sa-rec-action-stack">
+                            <div>
+                                <button type="button" class="btn btn-primary w-100" id="btn_llm_sector">
+                                    <i class="fas fa-comments me-2"></i>板块 / 行业方向
+                                </button>
+                                <div id="llm_sector_hint" class="sa-rec-hint mt-2"></div>
+                            </div>
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-success w-100" id="btn_llm_pick_stocks">
+                                    <i class="fas fa-brain me-2"></i>大模型推荐 10 只股票
+                                </button>
+                                <div id="llm_pick_hint" class="sa-rec-hint mt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="sa-rec-llm-col-out pt-3 mt-3 border-top">
+                    <div class="sa-rec-card-title">③ 板块/行业输出</div>
+                    <p id="llm_sector_err" class="small text-danger mb-2"></p>
+                    <div class="sa-rec-out-panel">
+                        <div class="sa-llm-out" id="llm_sector_out"></div>
+                    </div>
+                    <p id="llm_sector_disclaimer" class="small text-muted mt-2 mb-0"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card sa-rec-table-card sa-card-soft">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span><i class="fas fa-table me-2 text-primary"></i>大模型推荐结果</span>
+            <small class="text-muted fw-normal">最多 10 条</small>
+        </div>
+        <p class="sa-rec-table-note mb-0">说明列含「【大模型】」前缀；无数据列显示「—」表示未匹配到行情字段。</p>
+        <div class="card-body pt-2">
+            <p id="disclaimer" class="small mb-2"></p>
+            <div class="sa-table-wrap rounded-2 border border-light overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 sa-data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>代码</th>
+                                <th>名称</th>
+                                <th>所属版块</th>
+                                <th>推荐程度</th>
+                                <th>今日涨跌</th>
+                                <th>5日涨跌</th>
+                                <th>5日主力净占比</th>
+                                <th>匹配说明</th>
+                                <th>收藏</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

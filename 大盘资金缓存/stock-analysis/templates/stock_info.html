@@ -1,0 +1,125 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<script src="../static/js/echarts.js" charset='utf-8'></script>
+<script src="../static/js/sa-kline-chart.js"></script>
+
+<script type="text/javascript">
+    var stockChartHolder = { instance: null };
+    var stockCurrentPeriod = 'day';
+
+    function loadStockKline(search, period) {
+        period = period || stockCurrentPeriod;
+        stockCurrentPeriod = period;
+        $.get('/api/search_stock_index/' + encodeURIComponent(search), { period: period },
+            function (data) {
+                renderKlineChart('main1', data, stockChartHolder);
+            }
+        );
+    }
+
+    function loadStockFundamentals(search) {
+        $.get('/api/query_jibenmian_info/' + encodeURIComponent(search), {},
+            function (data) {
+                $('#main4').append('<h3>主要财务指标</h3><hr/>');
+                $('#main4').append(data['zyzb_table']);
+                $('#main5').append('<h3>机构预测</h3><hr/>');
+                $('#main5').append(data['jgyc_table']);
+                $('#gsjj').append('<h3>' + data['gsmc'] + '</h3>');
+                $('#gsjj').append('<p>' + data['gsjj'] + '</p>');
+                $('#concept_boards').append(data['concept_boards']);
+            }
+        );
+    }
+
+    $(function () {
+        for (var i = 1; i <= 7; i++) {
+            $('#li_' + i).attr('class', i === 3 ? 'nav-item active' : 'nav-item');
+        }
+
+        $('#module_name').text($('.nav-item.active').text())
+
+        $('.sa-period-btn').on('click', function () {
+            $('.sa-period-btn').removeClass('active');
+            $(this).addClass('active');
+            stockCurrentPeriod = $(this).data('period');
+            var q = $("#search_input").val();
+            if (q) loadStockKline(q, stockCurrentPeriod);
+        });
+
+        $("#search_btn").click(function () {
+            $("#add_select").empty();
+            $("#gsjj").empty();
+            $("#concept_boards").empty();
+            $("#main4").html("");
+            $("#main5").html("");
+            const search_input = $("#search_input").val();
+            if (!search_input) return;
+            loadStockKline(search_input, stockCurrentPeriod);
+            loadStockFundamentals(search_input);
+        });
+
+        const search = new URLSearchParams(window.location.search);
+        $('#search_input').val(search.get('search'));
+        if (search.get('search')) {
+            $("#search_btn").click();
+        }
+    });
+
+    function button_click_search(stock_code) {
+        $('#search_input').val(stock_code);
+        $("#search_btn").click();
+    }
+
+</script>
+
+<div class="sa-page-shell">
+    <div class="sa-hero sa-hero--compact">
+        <h2><i class="fas fa-chart-line sa-hero-icon"></i>个股量化分析</h2>
+        <p class="sa-hero-sub mb-0">搜索股票或指数，支持日线 / 周线 / 季线，查看 K 线、成交量、KDJ 的 J 值（9,3,3）及基本面与概念板块。</p>
+    </div>
+
+    <div class="card sa-card-soft mb-3">
+        <div class="card-header"><i class="fas fa-search me-2 text-primary"></i>搜索</div>
+        <div class="card-body py-3">
+            <div class="row">
+                <div class="col-lg-8 col-md-10 mx-auto">
+                    <div class="input-group input-group-lg">
+                        <input type="text" class="form-control rounded-start" id="search_input" placeholder="请输入股票名称、代码"
+                            aria-describedby="button-addon2">
+                        <button class="btn btn-primary px-4" type="button" id="search_btn"><i class="fas fa-search me-1"></i>搜索</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card sa-card-soft">
+        <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <span><i class="fas fa-layer-group me-2 text-primary"></i>行情与基本面</span>
+            <div class="btn-group sa-period-group" role="group">
+                <button type="button" class="btn btn-sm btn-outline-primary sa-period-btn active" data-period="day">日线</button>
+                <button type="button" class="btn btn-sm btn-outline-primary sa-period-btn" data-period="week">周线</button>
+                <button type="button" class="btn btn-sm btn-outline-primary sa-period-btn" data-period="month">月线</button>
+                <button type="button" class="btn btn-sm btn-outline-primary sa-period-btn" data-period="quarter">季线</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12 sa-chart-host sa-chart-host--kline" id="main1"></div>
+            </div>
+            <div class="row placeholders mt-3 px-1" id="gsjj"></div>
+            <div class="row mt-3">
+                <div class="col-12" id="main4"></div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12" id="main5"></div>
+            </div>
+            <div class="row mt-3 px-1">
+                <div class="col-12" id="concept_boards"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

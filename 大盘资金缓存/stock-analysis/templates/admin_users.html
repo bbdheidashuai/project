@@ -1,0 +1,107 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<script type="text/javascript">
+  $(function () {
+    for (var i = 1; i <= 7; i++) {
+      $('#li_' + i).attr('class', 'nav-item');
+    }
+    $('#module_name').text('注册用户管理');
+
+    function loadUsers() {
+      $.get('/user/admin/list', function (data) {
+        if (!data.success) {
+          alert(data.info || '加载失败');
+          return;
+        }
+        var tbody = $('#user_table_body');
+        tbody.empty();
+        data.users.forEach(function (u) {
+          var adm = u.is_admin ? '是' : '否';
+          var toggleText = u.is_admin ? '取消管理员' : '设为管理员';
+          var toggleVal = u.is_admin ? '0' : '1';
+          var row = $('<tr></tr>');
+          row.append('<td>' + $('<div/>').text(u.name).html() + '</td>');
+          row.append('<td>' + adm + '</td>');
+          var actions = $('<td></td>');
+          actions.append(
+            $('<button type="button" class="btn btn-sm btn-outline-primary me-1"></button>')
+              .text(toggleText)
+              .data('name', u.name)
+              .data('value', toggleVal)
+              .addClass('btn-toggle-admin')
+          );
+          actions.append(
+            $('<button type="button" class="btn btn-sm btn-outline-danger"></button>')
+              .text('删除')
+              .data('name', u.name)
+              .addClass('btn-del-user')
+          );
+          row.append(actions);
+          tbody.append(row);
+        });
+
+        $('.btn-toggle-admin').click(function () {
+          var name = $(this).data('name');
+          var value = $(this).data('value');
+          $.get('/user/admin/set_admin', { name: name, value: value }, function (res) {
+            alert(res.info || (res.success ? '操作成功' : '操作失败'));
+            if (res.success) loadUsers();
+          });
+        });
+
+        $('.btn-del-user').click(function () {
+          var name = $(this).data('name');
+          if (!confirm('确定删除用户「' + name + '」？')) return;
+          $.get('/user/admin/delete', { name: name }, function (res) {
+            alert(res.info || (res.success ? '已删除' : '删除失败'));
+            if (res.success) loadUsers();
+          });
+        });
+      }).fail(function (xhr) {
+        if (xhr.status === 403) {
+          alert('无权限');
+          window.location.href = '/';
+        } else {
+          alert('请求失败');
+        }
+      });
+    }
+
+    loadUsers();
+  });
+</script>
+
+<div class="sa-page-shell">
+  <div class="sa-hero sa-hero--compact">
+    <h2><i class="fas fa-users-cog sa-hero-icon"></i>注册用户管理</h2>
+    <p class="sa-hero-sub mb-0">查看已注册账号，设置或取消管理员，删除用户（不可删除当前登录账号或唯一管理员）。</p>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card sa-card-soft">
+        <div class="card-header">
+          <h4 class="card-title mb-0">已注册用户</h4>
+          <p class="card-category text-muted mb-0 small">操作将立即写入本地数据库</p>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 sa-module-table">
+              <thead>
+                <tr>
+                  <th>用户名</th>
+                  <th>管理员</th>
+                  <th style="width: 220px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="user_table_body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

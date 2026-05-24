@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<script type="text/javascript">
+    $(function () {
+        for (var i = 1; i <= 7; i++) {
+            $('#li_' + i).attr('class', i === 1 ? 'nav-item active' : 'nav-item');
+        }
+        $('#module_name').text('知行合一量化交易系统');
+    });
+</script>
+
+<div class="sa-page-shell sa-home-landing">
+    <div class="sa-home-landing-card">
+        <div class="sa-home-landing-img" role="img" aria-label="系统示意"
+            style="background-image: url(../static/img/login.png);"></div>
+        <div class="sa-home-landing-body">
+            <p class="sa-home-landing-kicker mb-2">知行 · 量化</p>
+            <h1 class="sa-home-landing-title mb-0">知行合一量化交易系统</h1>
+            <div class="sa-home-landing-line" aria-hidden="true"></div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

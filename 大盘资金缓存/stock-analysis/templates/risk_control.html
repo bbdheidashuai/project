@@ -1,0 +1,308 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<script type="text/javascript">
+    $(function () {
+        for (var i = 1; i <= 7; i++) {
+            $('#li_' + i).attr('class', i === 6 ? 'nav-item active' : 'nav-item');
+        }
+        $('#module_name').text('量化风控');
+
+        function fmtPct(v) {
+            if (v === null || v === undefined || v === '') return '—';
+            var n = parseFloat(v);
+            if (isNaN(n)) return '—';
+            var sign = n > 0 ? '+' : '';
+            return sign + n.toFixed(2) + '%';
+        }
+
+        function toastMsg(msg, type) {
+            type = type || 'info';
+            try {
+                if (typeof $.notify === 'function') {
+                    $.notify({ message: msg }, {
+                        type: type,
+                        placement: { from: 'top', align: 'right' },
+                        delay: 5200,
+                        z_index: 9999
+                    });
+                } else {
+                    alert(msg);
+                }
+            } catch (e) {
+                alert(msg);
+            }
+        }
+
+        /** 仅更新状态标签，不在页面上展示完整提示文案 */
+        function updateRiskStatus(level) {
+            var $status = $('#risk_status_label');
+            var $badge = $('#amv_mode_badge');
+            $status.removeClass('text-warning text-success text-muted');
+            $badge.removeClass('d-none bg-warning bg-success bg-secondary text-dark text-white');
+
+            if (level === 'defense') {
+                $status.addClass('text-warning').text('防守');
+                $badge.removeClass('d-none').addClass('bg-warning text-dark').text('防守');
+            } else if (level === 'aggressive') {
+                $status.addClass('text-success').text('积极');
+                $badge.removeClass('d-none').addClass('bg-success text-white').text('积极');
+            } else if (level === 'neutral') {
+                $status.addClass('text-success').text('正常');
+                $badge.addClass('d-none');
+            } else {
+                $status.addClass('text-muted').text('—');
+                $badge.addClass('d-none');
+            }
+        }
+
+        /** 保存或录入后弹出提示（toast），不写入页面正文 */
+        function promptAdvice(level, advice) {
+            if (!advice) {
+                return;
+            }
+            var type = level === 'defense' ? 'warning' : (level === 'aggressive' ? 'success' : 'info');
+            toastMsg(advice, type);
+        }
+
+        function setChangePctUi(pct) {
+            var n = parseFloat(pct);
+            if (isNaN(n)) {
+                $('#amv_direction').val('up');
+                $('#amv_change_abs').val('');
+                return;
+            }
+            if (n >= 0) {
+                $('#amv_direction').val('up');
+                $('#amv_change_abs').val(Math.abs(n).toFixed(2).replace(/\.?0+$/, ''));
+            } else {
+                $('#amv_direction').val('down');
+                $('#amv_change_abs').val(Math.abs(n).toFixed(2).replace(/\.?0+$/, ''));
+            }
+        }
+
+        function getChangePct() {
+            var abs = parseFloat($('#amv_change_abs').val());
+            if (isNaN(abs) || abs < 0) {
+                return NaN;
+            }
+            return $('#amv_direction').val() === 'down' ? -abs : abs;
+        }
+
+        function applyRecord(rec, showPrompt) {
+            if (!rec || !rec.has_record) {
+                $('#amv_saved_hint').text('今日尚未保存，请录入后点击保存。');
+                updateRiskStatus(null);
+                return;
+            }
+            setChangePctUi(rec.change_pct);
+            var hint = '今日已保存（' + (rec.saved_at || rec.date) + '）· 涨/跌 ' + fmtPct(rec.change_pct);
+            $('#amv_saved_hint').text(hint);
+            updateRiskStatus(rec.advice_level || 'neutral');
+            if (showPrompt) {
+                promptAdvice(rec.advice_level, rec.advice);
+            }
+        }
+
+        function loadToday() {
+            $.get('/api/risk/active_amv/today', function (res) {
+                if (res.success) {
+                    applyRecord(res);
+                }
+            }).fail(function (xhr) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                $('#amv_saved_hint').text('加载今日记录失败，请刷新重试。');
+            });
+        }
+
+        $('#amv_save_btn').on('click', function () {
+            var changePct = getChangePct();
+            if (isNaN(changePct)) {
+                alert('请选择涨/跌并填写涨跌幅数值');
+                return;
+            }
+            var $btn = $(this).prop('disabled', true);
+            $.ajax({
+                url: '/api/risk/active_amv/today',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ change_pct: changePct }),
+                success: function (res) {
+                    if (res.success) {
+                        applyRecord({
+                            has_record: true,
+                            change_pct: res.change_pct,
+                            saved_at: res.saved_at,
+                            date: res.date,
+                            advice_level: res.advice_level,
+                            advice: res.advice
+                        }, true);
+                        $('#amv_save_msg').removeClass('text-danger').addClass('text-success')
+                            .text('已保存');
+                        if (!res.advice) {
+                            toastMsg('今日风控：正常', 'info');
+                        }
+                    } else {
+                        $('#amv_save_msg').removeClass('text-success').addClass('text-danger')
+                            .text(res.message || '保存失败');
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 401) {
+                        window.location.href = '/login';
+                        return;
+                    }
+                    var msg = '保存失败';
+                    try {
+                        var r = xhr.responseJSON;
+                        if (r && r.message) msg = r.message;
+                    } catch (e) { }
+                    $('#amv_save_msg').removeClass('text-success').addClass('text-danger').text(msg);
+                },
+                complete: function () {
+                    $btn.prop('disabled', false);
+                }
+            });
+        });
+
+        loadToday();
+    });
+</script>
+
+<div class="sa-page-shell">
+    <div class="sa-hero sa-hero--compact">
+        <h2><i class="fas fa-shield-alt sa-hero-icon"></i>量化风控</h2>
+        <p class="sa-hero-sub mb-0">
+            录入活跃市值当日涨跌幅，系统按规则给出仓位风格提示，数据保存在本地缓存，当日再次登录可继续查看。
+        </p>
+    </div>
+
+    <div class="card sa-card-soft mb-3">
+        <div class="card-header"><i class="fas fa-edit me-2 text-primary"></i>今日涨跌幅</div>
+        <div class="card-body py-3">
+            <div class="row g-3 align-items-end">
+                <div class="col-6 col-md-4 col-lg-3">
+                    <label for="amv_direction" class="form-label text-muted small mb-1">涨 / 跌</label>
+                    <select class="form-select" id="amv_direction">
+                        <option value="up">涨</option>
+                        <option value="down">跌</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-5 col-lg-4">
+                    <label for="amv_change_abs" class="form-label text-muted small mb-1">涨跌幅（%）</label>
+                    <input type="number" step="0.01" min="0" class="form-control" id="amv_change_abs"
+                        placeholder="如 2.24">
+                </div>
+                <div class="col-12 col-md-3 col-lg-2">
+                    <button type="button" class="btn btn-primary w-100" id="amv_save_btn">
+                        <i class="fas fa-save me-1"></i>保存
+                    </button>
+                </div>
+            </div>
+            <p id="amv_saved_hint" class="text-muted small mt-3 mb-1">加载中…</p>
+            <p id="amv_save_msg" class="small mb-2"></p>
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="text-muted small">今日风格</span>
+                <span id="amv_mode_badge" class="badge d-none">—</span>
+            </div>
+            <p class="text-muted small mb-0">
+                保存后将以弹窗提示防守 / 积极策略；数据存于 <code>dataset/risk/active_amv.json</code>
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-6 col-lg-3">
+            <div class="card sa-card-soft h-100">
+                <div class="card-body">
+                    <div class="text-muted small mb-1">仓位上限</div>
+                    <div class="fs-4 fw-semibold text-primary">—</div>
+                    <p class="text-muted small mb-0 mt-2">单标的 / 总仓位占比阈值（待配置）</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card sa-card-soft h-100">
+                <div class="card-body">
+                    <div class="text-muted small mb-1">最大回撤</div>
+                    <div class="fs-4 fw-semibold text-warning">—</div>
+                    <p class="text-muted small mb-0 mt-2">策略或组合净值回撤监控（待接入）</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card sa-card-soft h-100">
+                <div class="card-body">
+                    <div class="text-muted small mb-1">波动率</div>
+                    <div class="fs-4 fw-semibold">—</div>
+                    <p class="text-muted small mb-0 mt-2">日 / 周波动与基准对比（待接入）</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card sa-card-soft h-100">
+                <div class="card-body">
+                    <div class="text-muted small mb-1">今日风格</div>
+                    <div class="fs-4 fw-semibold text-muted" id="risk_status_label">—</div>
+                    <p class="text-muted small mb-0 mt-2">保存后弹窗提示，此处仅显示防守 / 积极 / 正常</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card sa-card-soft mb-3">
+        <div class="card-header"><i class="fas fa-sliders-h me-2 text-primary"></i>风控规则</div>
+        <div class="card-body py-3">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0 align-middle">
+                    <thead>
+                        <tr>
+                            <th>规则</th>
+                            <th>说明</th>
+                            <th class="text-end">状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>涨跌幅风控</td>
+                            <td class="text-muted">跌超 2.3% 防守；涨超 4% 积极波段（见上方录入）</td>
+                            <td class="text-end"><span class="badge bg-success">已启用</span></td>
+                        </tr>
+                        <tr>
+                            <td>单笔止损</td>
+                            <td class="text-muted">单笔亏损达设定比例时禁止加仓或提示平仓</td>
+                            <td class="text-end"><span class="badge bg-secondary">待启用</span></td>
+                        </tr>
+                        <tr>
+                            <td>总仓位控制</td>
+                            <td class="text-muted">持仓总市值不超过账户可用资金上限</td>
+                            <td class="text-end"><span class="badge bg-secondary">待启用</span></td>
+                        </tr>
+                        <tr>
+                            <td>回撤熔断</td>
+                            <td class="text-muted">净值回撤超过阈值时暂停新开仓</td>
+                            <td class="text-end"><span class="badge bg-secondary">待启用</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card sa-card-soft">
+        <div class="card-header"><i class="fas fa-info-circle me-2 text-primary"></i>说明</div>
+        <div class="card-body py-3">
+            <p class="text-muted small mb-2">
+                涨跌幅为指南针 0AMV 相对前一交易日的百分比。同一交易日多次保存会覆盖当日记录，下次登录本页会自动带出。
+            </p>
+            <p class="text-muted small mb-0">
+                与 <a href="/stock_recommend">大模型辅助选股</a>、
+                <a href="/stock_info">个股量化分析</a> 配合使用，形成量化护栏。
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

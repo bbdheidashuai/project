@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+	<title>用户注册</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+	<link rel="stylesheet" href="../static/css/login_register_style.css">
+	<link rel="stylesheet" href="../static/css/app-extras.css">
+	<link rel="stylesheet" href="../static/css/app-tech.css">
+	<link rel="stylesheet" href="../static/css/app-dark-theme.css">
+	<script src="../static/js/core/jquery-3.7.1.min.js"></script>
+
+	<script type="text/javascript">
+		$(function () {
+			$.get('/user/check_login', {},
+				function (data) {
+					if (data['login'] === true) {
+						window.location.href = '/'
+					}
+				}
+			);
+			
+			// 用户注册
+			$("#submit").click(function () {
+                const name = $("#name").val();
+                const password = $("#password").val();
+
+                $.get('/user/register/' + name + '/' + password, {},
+                    function (data) {
+                        alert(data['info']);
+
+						if (data['success']) {
+							window.location.href = '/login'
+						}
+                    }
+                );
+            });
+	
+		});
+	</script>
+</head>
+
+<body class="sa-auth-body sa-dark-theme">
+	<section class="ftco-section">
+		<div class="container">
+			<div class="row justify-content-center">
+				<div class="col-md-8 text-center mb-5">
+					<h2 class="heading-section">欢迎使用知行合一量化交易系统</h2>
+				</div>
+			</div>
+			<div class="row justify-content-center">
+				<div class="col-md-12 col-lg-10">
+					<div class="wrap d-md-flex">
+						<div class="img" style="background-image: url(../static/img/login.png);">
+						</div>
+						<div class="login-wrap p-4 p-md-5">
+							<div class="d-flex">
+								<div class="w-100">
+									<h3 class="mb-4">用户注册</h3>
+								</div>
+								<div class="w-100">
+									<p class="social-media d-flex justify-content-end">
+										<a href="#"
+											class="social-icon d-flex align-items-center justify-content-center"><span
+												class="fa fa-facebook"></span></a>
+										<a href="#"
+											class="social-icon d-flex align-items-center justify-content-center"><span
+												class="fa fa-twitter"></span></a>
+									</p>
+								</div>
+							</div>
+							<form action="#" class="signin-form">
+								<div class="form-group mb-3">
+									<label class="label" for="name">用户名</label>
+									<input type="text" class="form-control" placeholder="Username" required  id="name" >
+								</div>
+								<div class="form-group mb-3">
+									<label class="label" for="password">密&nbsp;&nbsp;码</label>
+									<input type="password" class="form-control" placeholder="Password" required id="password">
+								</div>
+								<div class="form-group">
+									<button type="submit" id="submit" class="form-control btn btn-primary rounded submit px-3">注册</button>
+								</div>
+								
+							</form>
+							<p class="text-center">已有账号? <a data-toggle="tab" href="/login">直接登录</a></p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+</body>
+
+</html>

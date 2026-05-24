@@ -1,0 +1,264 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<script type="text/javascript">
+    $(function () {
+        for (var i = 1; i <= 7; i++) {
+            $('#li_' + i).attr('class', i === 7 ? 'nav-item active' : 'nav-item');
+        }
+        $('#module_name').text('量化策略');
+
+        var catalog = [];
+        var enabledIds = [];
+        var currentPeriod = 'day';
+        var screening = false;
+        var klineCacheCount = 0;
+        var universeTotal = 0;
+
+        function toastMsg(msg, type) {
+            type = type || 'info';
+            try {
+                if (typeof $.notify === 'function') {
+                    $.notify({ message: msg }, {
+                        type: type,
+                        placement: { from: 'top', align: 'right' },
+                        delay: 4500,
+                        z_index: 9999
+                    });
+                }
+            } catch (e) { }
+        }
+
+        function getCheckedIds() {
+            var ids = [];
+            $('#qs_strategy_list input[type=checkbox]:checked').each(function () {
+                ids.push($(this).val());
+            });
+            return ids;
+        }
+
+        function renderStrategyPicker() {
+            if (!catalog.length) {
+                $('#qs_strategy_list').html('<p class="text-muted small mb-0">暂无策略，后续可在此逐个添加。</p>');
+                return;
+            }
+            var html = '<div class="list-group list-group-flush">';
+            catalog.forEach(function (item, idx) {
+                var checked = enabledIds.indexOf(item.id) >= 0 ? ' checked' : '';
+                html += '<label class="list-group-item list-group-item-action d-flex align-items-start gap-2 py-3">';
+                html += '<input class="form-check-input mt-1 flex-shrink-0" type="checkbox" value="' + item.id + '"' + checked + '>';
+                html += '<div class="flex-grow-1">';
+                html += '<div class="fw-semibold">' + (idx + 1) + '. ' + item.name + '</div>';
+                html += '<div class="text-muted small mt-1">' + item.description + '</div>';
+                if (item.group) {
+                    html += '<span class="badge bg-secondary mt-2">' + item.group + '</span>';
+                }
+                html += '</div></label>';
+            });
+            html += '</div>';
+            $('#qs_strategy_list').html(html);
+        }
+
+        function renderMatches(rows) {
+            if (!rows.length) {
+                $('#qs_screen_result').html('<p class="text-muted small mb-0">暂无命中标的。</p>');
+                return;
+            }
+            var html = '<div class="table-responsive"><table class="table table-sm table-hover mb-0 align-middle">';
+            html += '<thead><tr><th>#</th><th>代码</th><th>名称</th><th class="text-end">J</th><th class="text-end">收盘价</th><th class="text-end">知行多空</th><th>日期</th><th>分析</th></tr></thead><tbody>';
+            rows.forEach(function (r, i) {
+                var link = '/stock_info?search=' + encodeURIComponent(r.code);
+                html += '<tr><td>' + (i + 1) + '</td>';
+                html += '<td><a href="' + link + '" target="_blank" rel="noopener"><i class="fas fa-chart-line me-1 opacity-50"></i>' + r.code + '</a></td>';
+                html += '<td><a href="' + link + '" target="_blank" rel="noopener" class="fw-semibold">' + r.name + '</a></td>';
+                html += '<td class="text-end fw-semibold">' + (r.j != null ? r.j : '—') + '</td>';
+                html += '<td class="text-end">' + (r.close != null ? r.close : '—') + '</td>';
+                html += '<td class="text-end">' + (r.zx_duokong != null ? r.zx_duokong : '—') + '</td>';
+                html += '<td class="text-muted small">' + (r.bar_date || '—') + '</td>';
+                html += '<td><a href="' + link + '" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary"><i class="fas fa-microscope me-1"></i>量化分析</a></td></tr>';
+            });
+            html += '</tbody></table></div>';
+            $('#qs_screen_result').html(html);
+        }
+
+        function savePrefs(cb) {
+            enabledIds = getCheckedIds();
+            $.ajax({
+                url: '/api/quant_strategy/prefs',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ enabled_ids: enabledIds }),
+                success: function (res) {
+                    if (res.success) {
+                        enabledIds = res.enabled_ids || enabledIds;
+                        if (cb) cb();
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.status === 401) window.location.href = '/login';
+                }
+            });
+        }
+
+        function loadCatalog() {
+            $.get('/api/quant_strategy/catalog', function (res) {
+                if (res.success) {
+                    catalog = res.catalog || [];
+                    enabledIds = res.enabled_ids || [];
+                    universeTotal = res.universe_total || 0;
+                    klineCacheCount = res.kline_cache_count || 0;
+                    renderStrategyPicker();
+                    if (universeTotal) {
+                        $('#qs_universe_hint').text(
+                            '全市场约 ' + universeTotal + ' 只 A 股（已排除 ST、B 股、300、688）；'
+                            + '本地日线缓存约 ' + klineCacheCount + ' 只。'
+                            + '勾选「快速扫描」仅用缓存，通常数十秒内完成；取消勾选则对无缓存股票联网补拉（较慢）。'
+                        );
+                    }
+                }
+            }).fail(function (xhr) {
+                if (xhr.status === 401) window.location.href = '/login';
+            });
+        }
+
+        function runScreenBatch(offset, acc, batchSize, cacheOnly) {
+            return $.ajax({
+                url: '/api/quant_strategy/screen',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    enabled_ids: enabledIds,
+                    period: currentPeriod,
+                    offset: offset,
+                    batch_size: batchSize,
+                    cache_only: cacheOnly,
+                    workers: cacheOnly ? 10 : 1
+                })
+            }).then(function (res) {
+                if (!res.success) {
+                    return $.Deferred().reject(res).promise();
+                }
+                acc.matches = acc.matches.concat(res.matches || []);
+                acc.total = res.total;
+                acc.period_name = res.period_name;
+                acc.no_cache = (acc.no_cache || 0) + (res.no_cache_in_batch || 0);
+                var pct = res.total ? Math.min(100, Math.round((res.next_offset / res.total) * 100)) : 100;
+                $('#qs_progress_bar').css('width', pct + '%');
+                var hint = '已扫描 ' + res.next_offset + ' / ' + res.total + ' · 命中 ' + acc.matches.length + ' 只';
+                if (cacheOnly && acc.no_cache) {
+                    hint += ' · 无缓存跳过 ' + acc.no_cache;
+                }
+                $('#qs_progress_text').text(hint);
+                if (!res.done) {
+                    return runScreenBatch(res.next_offset, acc, batchSize, cacheOnly);
+                }
+                return acc;
+            });
+        }
+
+        function startScreen() {
+            if (screening) return;
+            enabledIds = getCheckedIds();
+            if (!enabledIds.length) {
+                alert('请至少勾选一项策略');
+                return;
+            }
+            screening = true;
+            $('#qs_screen_btn').prop('disabled', true);
+            $('#qs_progress_wrap').removeClass('d-none');
+            $('#qs_progress_bar').css('width', '0%');
+            $('#qs_progress_text').text('准备扫描…');
+            $('#qs_screen_result').html('<p class="text-muted small mb-0">扫描中，请勿关闭页面…</p>');
+
+            savePrefs(function () {
+                var cacheOnly = $('#qs_cache_only').is(':checked');
+                var batchSize = cacheOnly ? 150 : 40;
+                runScreenBatch(0, { matches: [], no_cache: 0 }, batchSize, cacheOnly).then(function (acc) {
+                    renderMatches(acc.matches);
+                    var doneText = '完成 · 共扫描 ' + acc.total + ' 只 · 命中 ' + acc.matches.length + ' 只 · ' + (acc.period_name || '');
+                    if (cacheOnly && acc.no_cache) {
+                        doneText += ' · 无本地缓存跳过 ' + acc.no_cache + ' 只';
+                    }
+                    $('#qs_progress_text').text(doneText);
+                    toastMsg('选股完成，命中 ' + acc.matches.length + ' 只', acc.matches.length ? 'success' : 'info');
+                }).fail(function (err) {
+                    var msg = (err && err.message) ? err.message : '选股失败，请稍后重试';
+                    $('#qs_screen_result').html('<p class="text-danger small mb-0">' + msg + '</p>');
+                }).always(function () {
+                    screening = false;
+                    $('#qs_screen_btn').prop('disabled', false);
+                });
+            });
+        }
+
+        $('.qs-period-btn').on('click', function () {
+            $('.qs-period-btn').removeClass('active');
+            $(this).addClass('active');
+            currentPeriod = $(this).data('period');
+        });
+
+        $('#qs_save_prefs_btn').on('click', function () {
+            savePrefs(function () { toastMsg('已保存策略勾选', 'success'); });
+        });
+
+        $('#qs_screen_btn').on('click', startScreen);
+        loadCatalog();
+    });
+</script>
+
+<div class="sa-page-shell">
+    <div class="sa-hero sa-hero--compact">
+        <h2><i class="fas fa-chess sa-hero-icon"></i>量化策略</h2>
+        <p class="sa-hero-sub mb-0">
+            逐个添加策略并勾选；「开始选股」对全市场 A 股扫描，保留<strong>同时满足全部已选策略</strong>的标的。
+        </p>
+    </div>
+
+    <div class="card sa-card-soft mb-3">
+        <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <span><i class="fas fa-tasks me-2 text-primary"></i>策略库（勾选启用）</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="qs_save_prefs_btn">保存勾选</button>
+        </div>
+        <div class="card-body py-2" id="qs_strategy_list">
+            <p class="text-muted small mb-0">加载中…</p>
+        </div>
+    </div>
+
+    <div class="card sa-card-soft mb-3">
+        <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <span><i class="fas fa-filter me-2 text-primary"></i>全市场选股</span>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <div class="btn-group sa-period-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary qs-period-btn active" data-period="day">日线</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary qs-period-btn" data-period="week">周线</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary qs-period-btn" data-period="month">月线</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary qs-period-btn" data-period="quarter">季线</button>
+                </div>
+                <button type="button" class="btn btn-sm btn-primary" id="qs_screen_btn">
+                    <i class="fas fa-search me-1"></i>开始选股
+                </button>
+            </div>
+        </div>
+        <div class="card-body py-3">
+            <p id="qs_universe_hint" class="text-muted small mb-3">
+                基于 stock_list.csv 全市场列表；推荐开启「快速扫描」读取本地 K 线缓存。
+            </p>
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" role="switch" id="qs_cache_only" checked>
+                <label class="form-check-label" for="qs_cache_only">
+                    <strong>快速扫描</strong>（仅本地缓存，不联网；无缓存的股票自动跳过）
+                </label>
+            </div>
+            <div id="qs_progress_wrap" class="d-none mb-3">
+                <div class="progress" style="height: 8px;">
+                    <div id="qs_progress_bar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+                </div>
+                <p id="qs_progress_text" class="text-muted small mt-2 mb-0">—</p>
+            </div>
+            <div id="qs_screen_result">
+                <p class="text-muted small mb-0">勾选策略后点击「开始选股」。</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
