@@ -2,5 +2,9 @@
   "root": [
     "kdj_j_lt_13",
     "close_gte_zx_duokong"
+  ],
+  "test": [
+    "kdj_j_lt_13",
+    "close_gte_zx_duokong"
   ]
 }

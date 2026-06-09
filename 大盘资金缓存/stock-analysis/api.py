@@ -205,7 +205,8 @@ def _fetch_kline_from_baostock(code, days=1200, end_date=None, period='day'):
             raise Exception("未获取到任何数据")
 
         for col in ['open', 'close', 'high', 'low', 'volume']:
-            stock_df[col] = stock_df[col].astype(float)
+            #stock_df[col] = stock_df[col].astype(float)
+            stock_df[col] = pd.to_numeric(stock_df[col], errors='coerce')
         stock_df = stock_df[['date', 'open', 'close', 'low', 'high', 'volume']]
         if cfg.get('resample') == 'quarter':
             stock_df = _resample_to_quarter(stock_df)
